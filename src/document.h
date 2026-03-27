@@ -36,6 +36,7 @@ public:
 	Document(const QString& filename, DailyProgress* daily_progress, QWidget* parent = nullptr);
 	~Document();
 
+	QString helixMode() const;
 	QString filename() const;
 	QString title() const;
 	int untitledIndex() const;
@@ -59,6 +60,7 @@ public:
 	void close();
 	void checkSpelling();
 	void print(QPrinter* printer);
+	void setHelixMode(QString helix_mode);
 	bool loadFile(const QString& filename, int position);
 	void loadTheme(const Theme& theme);
 	void loadPreferences();
@@ -126,6 +128,7 @@ private:
 	bool m_rich_text;
 	bool m_spacings_loaded;
 	int m_focus_mode;
+	QString m_helix_mode;
 	QTextBlockFormat m_block_format;
 
 	QTimer* m_hide_timer;
@@ -154,6 +157,10 @@ private:
 
 	DailyProgress* m_daily_progress;
 };
+
+inline QString Document::helixMode() const {
+	return m_helix_mode;
+}
 
 inline QString Document::filename() const
 {

@@ -251,7 +251,7 @@ Window::Window(const QStringList& command_line_files)
 	details_layout->setSpacing(25);
 	details_layout->setContentsMargins(6, 6, 6, 6);
 	// TODO VIM enable this later
-	// details_layout->addWidget(m_vi_mode_label);
+	details_layout->addWidget(m_vi_mode_label);
 	details_layout->addWidget(m_wordcount_label);
 	details_layout->addWidget(m_page_label);
 	details_layout->addWidget(m_paragraph_label);
@@ -933,7 +933,7 @@ void Window::updateDetails()
 	m_character_label->setText(tr("Characters: %L1 / %L2").arg(document->characterCount()).arg(document->characterAndSpaceCount()));
 	m_page_label->setText(tr("Pages: %L1").arg(document->pageCount()));
 	m_paragraph_label->setText(tr("Paragraphs: %L1").arg(document->paragraphCount()));
-	// TODO VIM modify m_vi_mode_label here
+	m_vi_mode_label->setText(tr("%L1").arg(document->helixMode()));
 	m_wordcount_label->setText(tr("Words: %L1").arg(document->wordCount()));
 }
 

@@ -96,12 +96,13 @@ public:
 	TextEdit(Document* document)
 		: QTextEdit(document)
 		, m_document(document)
-		, m_vi_mode(NormalMode)
+		, m_helix_mode(NormalMode)
 	{
+		setHelixMode(NormalMode);
 		setAutoFillBackground(false);
 	}
 
-	QString getViMode();
+	QString getHelixModeString();
 
 protected:
 	bool canInsertFromMimeData(const QMimeData* source) const override;
@@ -118,11 +119,12 @@ private:
 
 private:
 	Document* m_document;
-	ViMode m_vi_mode;
+	ViMode m_helix_mode;
 
 	std::vector<QKeyEvent*> m_normal_mode_events;
 	void resolveVimNormalModeEvents(bool);
 	void handleVimGoto(QKeyEvent*, QTextCursor::MoveMode);
+	void setHelixMode(ViMode);
 };
 
 bool TextEdit::canInsertFromMimeData(const QMimeData* source) const
@@ -277,6 +279,10 @@ bool TextEdit::event(QEvent* event)
 	return QTextEdit::event(event);
 }
 
+void TextEdit::setHelixMode(ViMode mode) {
+	m_helix_mode = mode;
+	m_document->setHelixMode(getHelixModeString());
+}
 
 void TextEdit::handleVimGoto(QKeyEvent *event, QTextCursor::MoveMode move_mode) {
 	switch (event->key()) {
@@ -337,24 +343,27 @@ void TextEdit::resolveVimNormalModeEvents(bool visual) {
 				}
 				break;
 			case Qt::Key_I:
-				m_vi_mode = InsertMode;
+				setHelixMode(InsertMode);
+				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+					moveCursor(QTextCursor::StartOfLine);
+				}
 				break;
 			case Qt::Key_A:
+				setHelixMode(InsertMode);
 				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-					moveCursor(QTextCursor::EndOfLine, move_mode);
+					moveCursor(QTextCursor::EndOfLine);
 				}
-				m_vi_mode = InsertMode;
 				break;
 			case Qt::Key_V:
-				m_vi_mode = VisualMode;
+				setHelixMode(VisualMode);
 				break;
 		}
 		m_normal_mode_events.clear();
 	}
 }
 
-QString TextEdit::getViMode() {
-	switch (m_vi_mode) {
+QString TextEdit::getHelixModeString() {
+	switch (m_helix_mode) {
 		case VisualMode:
 			return QString("VISUAL");
 			break;
@@ -369,7 +378,7 @@ QString TextEdit::getViMode() {
 
 void TextEdit::keyPressEvent(QKeyEvent* event)
 {
-	switch (m_vi_mode) {
+	switch (m_helix_mode) {
 		case NormalMode:
 			// TODO VIM check out https://vim.rtorr.com/ for bindings
 			m_normal_mode_events.push_back(event->clone());
@@ -378,16 +387,16 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 		case VisualMode:
 			switch (event->key()) {
 				case Qt::Key_Escape:
-					m_vi_mode = NormalMode;
+					setHelixMode(NormalMode);
 					textCursor().clearSelection();
 					break;
 				case Qt::Key_C:
 					textCursor().removeSelectedText();
-					m_vi_mode = InsertMode;
+					setHelixMode(InsertMode);
 					break;
 				case Qt::Key_D:
 					textCursor().removeSelectedText();
-					m_vi_mode = NormalMode;
+					setHelixMode(NormalMode);
 					break;
 				default:
 					m_normal_mode_events.push_back(event->clone());
@@ -397,7 +406,7 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 			return;
 		case InsertMode:
 			if (event->key() == Qt::Key_Escape) {
-				m_vi_mode = NormalMode;
+				setHelixMode(NormalMode);
 				return;
 			}
 			// do nothing, just pass through
@@ -973,6 +982,13 @@ void Document::print(QPrinter* printer)
 
 	// Reset pages
 	printer->setFromTo(0, 0);
+}
+
+//-----------------------------------------------------------------------------
+
+void Document::setHelixMode(QString helix_mode) {
+	m_helix_mode = helix_mode;
+	Q_EMIT changed();
 }
 
 //-----------------------------------------------------------------------------
