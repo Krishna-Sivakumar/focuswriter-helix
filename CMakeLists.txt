@@ -19,6 +19,8 @@ if (WIN32)
 	set(Iconv_IS_BUILT_IN true)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui LinguistTools Multimedia Network PrintSupport Widgets)
 find_package(Iconv REQUIRED)
 find_package(ZLIB REQUIRED)
