@@ -36,6 +36,7 @@ public:
 	Document(const QString& filename, DailyProgress* daily_progress, QWidget* parent = nullptr);
 	~Document();
 
+	bool helixModeEnabled() const;
 	QString helixMode() const;
 	QString filename() const;
 	QString title() const;
@@ -122,6 +123,7 @@ private:
 	bool m_cache_outdated;
 	QHash<int, QPair<QString, bool>> m_old_states;
 	int m_index;
+	bool m_enable_helix_mode;
 	bool m_always_center;
 	bool m_mouse_button_down;
 	bool m_block_cursor;
@@ -160,6 +162,10 @@ private:
 
 inline QString Document::helixMode() const {
 	return m_helix_mode;
+}
+
+inline bool Document::helixModeEnabled() const {
+	return m_enable_helix_mode;
 }
 
 inline QString Document::filename() const

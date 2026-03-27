@@ -65,6 +65,7 @@ private:
 private:
 	QTabWidget* m_tabs;
 
+	QCheckBox* m_enable_helix_mode;
 	QCheckBox* m_always_center;
 	QCheckBox* m_block_cursor;
 	QCheckBox* m_smooth_fonts;

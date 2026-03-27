@@ -378,38 +378,40 @@ QString TextEdit::getHelixModeString() {
 
 void TextEdit::keyPressEvent(QKeyEvent* event)
 {
-	switch (m_helix_mode) {
-		case NormalMode:
-			// TODO VIM check out https://vim.rtorr.com/ for bindings
-			m_normal_mode_events.push_back(event->clone());
-			resolveVimNormalModeEvents(false);
-			return;
-		case VisualMode:
-			switch (event->key()) {
-				case Qt::Key_Escape:
-					setHelixMode(NormalMode);
-					textCursor().clearSelection();
-					break;
-				case Qt::Key_C:
-					textCursor().removeSelectedText();
-					setHelixMode(InsertMode);
-					break;
-				case Qt::Key_D:
-					textCursor().removeSelectedText();
-					setHelixMode(NormalMode);
-					break;
-				default:
-					m_normal_mode_events.push_back(event->clone());
-					resolveVimNormalModeEvents(true);
-					break;
-			}
-			return;
-		case InsertMode:
-			if (event->key() == Qt::Key_Escape) {
-				setHelixMode(NormalMode);
+	if (m_document->helixModeEnabled()) {
+		switch (m_helix_mode) {
+			case NormalMode:
+				// TODO VIM check out https://vim.rtorr.com/ for bindings
+				m_normal_mode_events.push_back(event->clone());
+				resolveVimNormalModeEvents(false);
 				return;
-			}
-			// do nothing, just pass through
+			case VisualMode:
+				switch (event->key()) {
+					case Qt::Key_Escape:
+						setHelixMode(NormalMode);
+						textCursor().clearSelection();
+						break;
+					case Qt::Key_C:
+						textCursor().removeSelectedText();
+						setHelixMode(InsertMode);
+						break;
+					case Qt::Key_D:
+						textCursor().removeSelectedText();
+						setHelixMode(NormalMode);
+						break;
+					default:
+						m_normal_mode_events.push_back(event->clone());
+						resolveVimNormalModeEvents(true);
+						break;
+				}
+				return;
+			case InsertMode:
+				if (event->key() == Qt::Key_Escape) {
+					setHelixMode(NormalMode);
+					return;
+				}
+				// do nothing, just pass through
+		}
 	}
 
 	
@@ -548,6 +550,7 @@ Document::Document(const QString& filename, DailyProgress* daily_progress, QWidg
 	: QWidget(parent)
 	, m_cache_outdated(false)
 	, m_index(0)
+	, m_enable_helix_mode(false)
 	, m_always_center(false)
 	, m_mouse_button_down(false)
 	, m_rich_text(false)
@@ -1194,6 +1197,7 @@ void Document::loadTheme(const Theme& theme)
 void Document::loadPreferences()
 {
 	m_always_center = Preferences::instance().alwaysCenter();
+	m_enable_helix_mode = Preferences::instance().enableHelixMode();
 
 	m_page_type = Preferences::instance().pageType();
 	switch (m_page_type) {

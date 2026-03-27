@@ -933,8 +933,16 @@ void Window::updateDetails()
 	m_character_label->setText(tr("Characters: %L1 / %L2").arg(document->characterCount()).arg(document->characterAndSpaceCount()));
 	m_page_label->setText(tr("Pages: %L1").arg(document->pageCount()));
 	m_paragraph_label->setText(tr("Paragraphs: %L1").arg(document->paragraphCount()));
-	m_vi_mode_label->setText(tr("%L1").arg(document->helixMode()));
 	m_wordcount_label->setText(tr("Words: %L1").arg(document->wordCount()));
+
+	if (Preferences::instance().enableHelixMode()) {
+		if (!m_vi_mode_label->isVisible()) {
+			m_vi_mode_label->setVisible(true);
+		}
+		m_vi_mode_label->setText(tr("%L1").arg(document->helixMode()));
+	} else {
+		m_vi_mode_label->setVisible(false);
+	}
 }
 
 //-----------------------------------------------------------------------------

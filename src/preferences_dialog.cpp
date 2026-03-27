@@ -37,6 +37,7 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 #include <QtZipReader>
+#include <qcheckbox.h>
 
 //-----------------------------------------------------------------------------
 
@@ -137,6 +138,7 @@ PreferencesDialog::PreferencesDialog(DailyProgress* daily_progress, QWidget* par
 		break;
 	}
 
+	m_enable_helix_mode->setChecked(Preferences::instance().enableHelixMode());
 	m_always_center->setChecked(Preferences::instance().alwaysCenter());
 	m_block_cursor->setChecked(Preferences::instance().blockCursor());
 	m_smooth_fonts->setChecked(Preferences::instance().smoothFonts());
@@ -263,6 +265,7 @@ void PreferencesDialog::accept()
 		Preferences::instance().setWordcountType(2);
 	}
 
+	Preferences::instance().setEnableHelixMode(m_enable_helix_mode->isChecked());
 	Preferences::instance().setAlwaysCenter(m_always_center->isChecked());
 	Preferences::instance().setBlockCursor(m_block_cursor->isChecked());
 	Preferences::instance().setSmoothFonts(m_smooth_fonts->isChecked());
@@ -666,6 +669,7 @@ QWidget* PreferencesDialog::initGeneralTab()
 	// Create edit options
 	QGroupBox* edit_group = new QGroupBox(tr("Editing"), tab);
 
+	m_enable_helix_mode = new QCheckBox(tr("Enable Helix key bindings"), edit_group);
 	m_always_center = new QCheckBox(tr("Always vertically center"), edit_group);
 	m_block_cursor = new QCheckBox(tr("Block insertion cursor"), edit_group);
 	m_smooth_fonts = new QCheckBox(tr("Smooth fonts"), edit_group);
@@ -701,6 +705,7 @@ QWidget* PreferencesDialog::initGeneralTab()
 	edit_layout->addWidget(m_smooth_fonts);
 	edit_layout->addLayout(quotes_layout);
 	edit_layout->addWidget(m_typewriter_sounds);
+	edit_layout->addWidget(m_enable_helix_mode);
 
 	// Create section options
 	QGroupBox* scene_group = new QGroupBox(tr("Scenes"), tab);

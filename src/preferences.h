@@ -58,6 +58,7 @@ public:
 	RangedInt wordcountType() const { return m_wordcount_type; }
 	void setWordcountType(int type) { setValue(m_wordcount_type, type); }
 
+	bool enableHelixMode() const { return m_enable_helix_mode; }
 	bool alwaysCenter() const { return m_always_center; }
 	bool blockCursor() const { return m_block_cursor; }
 	bool smoothFonts() const { return m_smooth_fonts; }
@@ -65,6 +66,7 @@ public:
 	int doubleQuotes() const { return m_double_quotes; }
 	int singleQuotes() const { return m_single_quotes; }
 	bool typewriterSounds() const { return m_typewriter_sounds; }
+	void setEnableHelixMode(bool helix_mode) { setValue(m_enable_helix_mode, helix_mode); }
 	void setAlwaysCenter(bool center) { setValue(m_always_center, center); }
 	void setBlockCursor(bool block) { setValue(m_block_cursor, block); }
 	void setSmoothFonts(bool smooth) { setValue(m_smooth_fonts, smooth); }
@@ -130,6 +132,7 @@ private:
 
 	RangedInt m_wordcount_type;
 
+	bool m_enable_helix_mode;
 	bool m_always_center;
 	bool m_block_cursor;
 	bool m_smooth_fonts;

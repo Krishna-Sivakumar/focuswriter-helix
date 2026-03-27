@@ -88,6 +88,7 @@ void Preferences::reload()
 	}
 	m_wordcount_type = settings.value("Stats/WordcountType", old_wordcount_type).toInt();
 
+	m_enable_helix_mode = settings.value("Edit/EnableHelixMode", true).toBool();
 	m_always_center = settings.value("Edit/AlwaysCenter", false).toBool();
 	m_block_cursor = settings.value("Edit/BlockCursor", false).toBool();
 	m_smooth_fonts = settings.value("Edit/SmoothFonts", true).toBool();
@@ -146,6 +147,7 @@ void Preferences::write()
 
 	settings.setValue("Stats/WordcountType", m_wordcount_type.value());
 
+	settings.setValue("Edit/EnableHelixMode", m_enable_helix_mode);
 	settings.setValue("Edit/AlwaysCenter", m_always_center);
 	settings.setValue("Edit/BlockCursor", m_block_cursor);
 	settings.setValue("Edit/SmoothFonts", m_smooth_fonts);
