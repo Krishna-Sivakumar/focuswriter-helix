@@ -56,6 +56,9 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <qapplication.h>
+#include <qclipboard.h>
+#include <qguiapplication.h>
 #include <qnamespace.h>
 #include <qtextcursor.h>
 #include <string>
@@ -290,10 +293,10 @@ void TextEdit::handleVimGoto(QKeyEvent *event, QTextCursor::MoveMode move_mode) 
 			moveCursor(QTextCursor::Start, move_mode);
 			break;
 		case Qt::Key_H:
-			moveCursor(QTextCursor::StartOfLine, move_mode);
+			moveCursor(QTextCursor::StartOfBlock, move_mode);
 			break;
 		case Qt::Key_L:
-			moveCursor(QTextCursor::EndOfLine, move_mode);
+			moveCursor(QTextCursor::EndOfBlock, move_mode);
 			break;
 		case Qt::Key_E:
 			moveCursor(QTextCursor::End, move_mode);
@@ -342,16 +345,31 @@ void TextEdit::resolveVimNormalModeEvents(bool visual) {
 					undo();
 				}
 				break;
+			case Qt::Key_X:
+			  moveCursor(QTextCursor::StartOfBlock, QTextCursor::MoveAnchor);
+			  moveCursor(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+			  setHelixMode(VisualMode);
+			  break;
+			case Qt::Key_Y:
+			  if (textCursor().hasSelection()) {
+			    QApplication::clipboard()->setText(textCursor().selectedText());
+			    textCursor().clearSelection();
+			    setHelixMode(NormalMode);
+			  }
+			  break;
+			case Qt::Key_P:
+			  textCursor().insertText(QApplication::clipboard()->text());
+			  break;
 			case Qt::Key_I:
 				setHelixMode(InsertMode);
 				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-					moveCursor(QTextCursor::StartOfLine);
+					moveCursor(QTextCursor::StartOfBlock);
 				}
 				break;
 			case Qt::Key_A:
 				setHelixMode(InsertMode);
 				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-					moveCursor(QTextCursor::EndOfLine);
+					moveCursor(QTextCursor::EndOfBlock);
 				}
 				break;
 			case Qt::Key_V:
