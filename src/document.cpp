@@ -119,8 +119,10 @@ private:
 private:
 	Document* m_document;
 	ViMode m_vi_mode;
-	std::vector<QKeyEvent*> m_normal_mode_keys;
-	void resolveNormalModeEvents();
+
+	std::vector<QKeyEvent*> m_normal_mode_events;
+	void resolveVimNormalModeEvents(bool);
+	void handleVimGoto(QKeyEvent*, QTextCursor::MoveMode);
 };
 
 bool TextEdit::canInsertFromMimeData(const QMimeData* source) const
@@ -275,8 +277,80 @@ bool TextEdit::event(QEvent* event)
 	return QTextEdit::event(event);
 }
 
-void TextEdit::resolveNormalModeEvents() {
-	
+
+void TextEdit::handleVimGoto(QKeyEvent *event, QTextCursor::MoveMode move_mode) {
+	switch (event->key()) {
+		case Qt::Key_G:
+			moveCursor(QTextCursor::Start, move_mode);
+			break;
+		case Qt::Key_H:
+			moveCursor(QTextCursor::StartOfLine, move_mode);
+			break;
+		case Qt::Key_L:
+			moveCursor(QTextCursor::EndOfLine, move_mode);
+			break;
+		case Qt::Key_E:
+			moveCursor(QTextCursor::End, move_mode);
+			break;
+	}
+}
+
+void TextEdit::resolveVimNormalModeEvents(bool visual) {
+	if (m_normal_mode_events.size() == 0) {
+		return;
+	}
+
+	auto move_mode = visual ? QTextCursor::KeepAnchor : QTextCursor::MoveAnchor;
+
+	QKeyEvent* event = m_normal_mode_events[0];
+	if (event->key() == Qt::Key_G) {
+		if (m_normal_mode_events.size() > 1) {
+			auto followup = m_normal_mode_events[1];
+			handleVimGoto(followup, move_mode);
+			m_normal_mode_events.clear();
+		}
+	} else {
+		switch (event->key()) {
+			case Qt::Key_J:
+				moveCursor(QTextCursor::Down, move_mode);
+				break;
+			case Qt::Key_K:
+				moveCursor(QTextCursor::Up, move_mode);
+				break;
+			case Qt::Key_H:
+				moveCursor(QTextCursor::Left, move_mode);
+				break;
+			case Qt::Key_L:
+				moveCursor(QTextCursor::Right, move_mode);
+				break;
+			case Qt::Key_B:
+				moveCursor(QTextCursor::WordLeft, move_mode);
+				break;
+			case Qt::Key_W:
+				moveCursor(QTextCursor::WordRight, move_mode);
+				break;
+			case Qt::Key_U:
+				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+					redo();
+				} else {
+					undo();
+				}
+				break;
+			case Qt::Key_I:
+				m_vi_mode = InsertMode;
+				break;
+			case Qt::Key_A:
+				if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+					moveCursor(QTextCursor::EndOfLine, move_mode);
+				}
+				m_vi_mode = InsertMode;
+				break;
+			case Qt::Key_V:
+				m_vi_mode = VisualMode;
+				break;
+		}
+		m_normal_mode_events.clear();
+	}
 }
 
 QString TextEdit::getViMode() {
@@ -297,64 +371,27 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 {
 	switch (m_vi_mode) {
 		case NormalMode:
-			// TODO VIM collect events in a buffer and clear them out if they parse to one specific thing
 			// TODO VIM check out https://vim.rtorr.com/ for bindings
-			switch (event->key()) {
-				case Qt::Key_J:
-					moveCursor(QTextCursor::Down);
-					break;
-				case Qt::Key_K:
-					moveCursor(QTextCursor::Up);
-					break;
-				case Qt::Key_H:
-					moveCursor(QTextCursor::Right);
-					break;
-				case Qt::Key_L:
-					moveCursor(QTextCursor::Left);
-					break;
-				case Qt::Key_B:
-					moveCursor(QTextCursor::WordLeft);
-					break;
-				case Qt::Key_W:
-					moveCursor(QTextCursor::WordRight);
-					break;
-				case Qt::Key_0:
-					moveCursor(QTextCursor::StartOfLine);
-					break;
- 				case Qt::Key_Dollar:
-					moveCursor(QTextCursor::EndOfLine);
-					break;
-				case Qt::Key_U:
-					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-						redo();
-					} else {
-						undo();
-					}
-					break;
-				case Qt::Key_G:
-					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-						moveCursor(QTextCursor::End);
-					}
-					break;
-				case Qt::Key_I:
-					m_vi_mode = InsertMode;
-					break;
-				case Qt::Key_A:
-					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-						moveCursor(QTextCursor::EndOfLine);
-					}
-					m_vi_mode = InsertMode;
-					break;
-				case Qt::Key_V:
-					m_vi_mode = VisualMode;
-					break;
-			}
+			m_normal_mode_events.push_back(event->clone());
+			resolveVimNormalModeEvents(false);
 			return;
 		case VisualMode:
-			// TODO VIM implement this
 			switch (event->key()) {
 				case Qt::Key_Escape:
 					m_vi_mode = NormalMode;
+					textCursor().clearSelection();
+					break;
+				case Qt::Key_C:
+					textCursor().removeSelectedText();
+					m_vi_mode = InsertMode;
+					break;
+				case Qt::Key_D:
+					textCursor().removeSelectedText();
+					m_vi_mode = NormalMode;
+					break;
+				default:
+					m_normal_mode_events.push_back(event->clone());
+					resolveVimNormalModeEvents(true);
 					break;
 			}
 			return;
