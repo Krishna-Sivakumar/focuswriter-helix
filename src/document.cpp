@@ -56,6 +56,9 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <qnamespace.h>
+#include <qtextcursor.h>
+#include <string>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -81,15 +84,24 @@ namespace
 
 QList<int> g_untitled_indexes{ 0 };
 
+enum ViMode {
+	NormalMode,
+	VisualMode,
+	InsertMode
+};
+
 class TextEdit : public QTextEdit
 {
 public:
 	TextEdit(Document* document)
 		: QTextEdit(document)
 		, m_document(document)
+		, m_vi_mode(NormalMode)
 	{
 		setAutoFillBackground(false);
 	}
+
+	QString getViMode();
 
 protected:
 	bool canInsertFromMimeData(const QMimeData* source) const override;
@@ -106,6 +118,9 @@ private:
 
 private:
 	Document* m_document;
+	ViMode m_vi_mode;
+	std::vector<QKeyEvent*> m_normal_mode_keys;
+	void resolveNormalModeEvents();
 };
 
 bool TextEdit::canInsertFromMimeData(const QMimeData* source) const
@@ -260,8 +275,98 @@ bool TextEdit::event(QEvent* event)
 	return QTextEdit::event(event);
 }
 
+void TextEdit::resolveNormalModeEvents() {
+	
+}
+
+QString TextEdit::getViMode() {
+	switch (m_vi_mode) {
+		case VisualMode:
+			return QString("VISUAL");
+			break;
+		case InsertMode:
+			return QString("INSERT");
+			break;
+		default:
+			return QString("NORMAL");
+			break;
+	}
+}
+
 void TextEdit::keyPressEvent(QKeyEvent* event)
 {
+	switch (m_vi_mode) {
+		case NormalMode:
+			// TODO VIM collect events in a buffer and clear them out if they parse to one specific thing
+			// TODO VIM check out https://vim.rtorr.com/ for bindings
+			switch (event->key()) {
+				case Qt::Key_J:
+					moveCursor(QTextCursor::Down);
+					break;
+				case Qt::Key_K:
+					moveCursor(QTextCursor::Up);
+					break;
+				case Qt::Key_H:
+					moveCursor(QTextCursor::Right);
+					break;
+				case Qt::Key_L:
+					moveCursor(QTextCursor::Left);
+					break;
+				case Qt::Key_B:
+					moveCursor(QTextCursor::WordLeft);
+					break;
+				case Qt::Key_W:
+					moveCursor(QTextCursor::WordRight);
+					break;
+				case Qt::Key_0:
+					moveCursor(QTextCursor::StartOfLine);
+					break;
+ 				case Qt::Key_Dollar:
+					moveCursor(QTextCursor::EndOfLine);
+					break;
+				case Qt::Key_U:
+					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+						redo();
+					} else {
+						undo();
+					}
+					break;
+				case Qt::Key_G:
+					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+						moveCursor(QTextCursor::End);
+					}
+					break;
+				case Qt::Key_I:
+					m_vi_mode = InsertMode;
+					break;
+				case Qt::Key_A:
+					if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+						moveCursor(QTextCursor::EndOfLine);
+					}
+					m_vi_mode = InsertMode;
+					break;
+				case Qt::Key_V:
+					m_vi_mode = VisualMode;
+					break;
+			}
+			return;
+		case VisualMode:
+			// TODO VIM implement this
+			switch (event->key()) {
+				case Qt::Key_Escape:
+					m_vi_mode = NormalMode;
+					break;
+			}
+			return;
+		case InsertMode:
+			if (event->key() == Qt::Key_Escape) {
+				m_vi_mode = NormalMode;
+				return;
+			}
+			// do nothing, just pass through
+	}
+
+	
 	if (event->matches(QKeySequence::Cut)
 			|| event->matches(QKeySequence::Copy)
 			|| event->matches(QKeySequence::Paste)
@@ -275,6 +380,8 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 		event->ignore();
 		return;
 	}
+
+	// TODO VIM intercept events here
 
 #ifndef Q_OS_MAC
 	const Qt::KeyboardModifiers move_modifiers = Qt::ControlModifier;
@@ -320,6 +427,9 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 
 		return;
 	}
+
+	// TODO VIM do not allow insertions through in normal mode
+	// TODO VIM move cursor around in 
 
 	QTextEdit::keyPressEvent(event);
 

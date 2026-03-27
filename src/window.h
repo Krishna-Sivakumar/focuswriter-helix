@@ -122,6 +122,7 @@ private:
 	QLabel* m_character_label;
 	QLabel* m_page_label;
 	QLabel* m_paragraph_label;
+	QLabel* m_vi_mode_label;
 	QLabel* m_wordcount_label;
 	DailyProgressLabel* m_progress_label;
 	QLabel* m_clock_label;
