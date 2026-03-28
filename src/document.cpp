@@ -316,6 +316,9 @@ void TextEdit::resolveVimNormalModeEvents(bool visual) {
 		if (m_normal_mode_events.size() > 1) {
 			auto followup = m_normal_mode_events[1];
 			handleVimGoto(followup, move_mode);
+			for (auto e: m_normal_mode_events) {
+				delete e;
+			}
 			m_normal_mode_events.clear();
 		}
 	} else {
@@ -375,6 +378,9 @@ void TextEdit::resolveVimNormalModeEvents(bool visual) {
 			case Qt::Key_V:
 				setHelixMode(VisualMode);
 				break;
+		}
+		for (auto e: m_normal_mode_events) {
+			delete e;
 		}
 		m_normal_mode_events.clear();
 	}
@@ -493,9 +499,6 @@ void TextEdit::keyPressEvent(QKeyEvent* event)
 
 		return;
 	}
-
-	// TODO VIM do not allow insertions through in normal mode
-	// TODO VIM move cursor around in 
 
 	QTextEdit::keyPressEvent(event);
 
